@@ -1,0 +1,124 @@
+ #thumbnails {
+  background: $dark-background;
+  position: fixed;
+  bottom: 0;
+  z-index: 999999;
+  height: auto;
+  width: inherit;
+  #book-navbar {
+    height: 40px;
+    background-color: #333;
+    border-top: 1px solid #212121;
+    a, a:link {
+      text-decoration: none;
+    }
+    div.pager {
+      float: right;
+      margin-right: 1em;
+      margin-top: -1px;
+      background-color: #333;
+      height: 40px;
+      .pager-list {
+        display: none;
+        visibility: hidden;
+      }
+    }
+  }
+  .view-book-thumbnails {
+    margin: 5px 1%;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: row nowrap;
+    flex-flow: row nowrap;
+    -ms-flex-wrap: nowrap;
+    .views-row {
+      position: relative;
+      -ms-flex: 0 1 auto;
+      -webkit-flex: 0 1 auto;
+      flex: 0 1 auto;
+      margin: 0 1%;
+      overflow: hidden;
+      max-width: 8%;
+    }
+    .thumbHolder {
+      position: relative;
+      bottom: 0;
+    }
+    img.thumbItem {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: none;
+      position: absolute;
+      top: 0;
+      z-index: -1;
+    }
+    img.thumbItemloader {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: none;
+      opacity: 0;
+    }
+    img.thumbItembg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: none;
+      opacity: .9;
+      position: absolute;
+      top: 0;
+      z-index: -2;
+    }
+    a {
+      display: block;
+      &:hover {
+        box-shadow: inset  0px 0px 0px 6px white;
+        .page-number {
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+        }
+      }
+    }
+    .page-number {
+      color: white;
+      padding: 3% 6%;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.33);
+      display: block;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+  }
+}
+
+// Use sibling selector here
+#pager[dir="rtl"] ~ .thumbnails {
+  .thumbnails-container {
+    .pager-first,
+    .pager-previous {
+      float: right;
+    }
+    .pager-last,
+    .pager-next {
+      float: right;
+    }
+    .pager-next a:before {
+      content: "\e013" !important;
+    }
+    .pager-previous a:before {
+      content: "\e012" !important;
+    }
+    .pager-last a:before {
+      content: "\e010";
+    }
+    .pager-first a:before {
+      content: "\e011";
+    }
+  }
+  .view-book-thumbnails {
+    direction: rtl;
+  }
+}
