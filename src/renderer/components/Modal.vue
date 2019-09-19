@@ -81,51 +81,21 @@ export default {
   },
   methods: {
     onInfoModalDelete() {
-      const fetchUrl = 'http://192.168.0.9/home/delete-messages';
-      const formData = new FormData();
-      formData.append('id', this.infoModal.extension);
-      delete this.items[this.infoModal.index];
-      this.$root.$emit('bv::refresh::table', 'infoTable');
-      this.$root.$emit('bv::hide::modal', this.infoModal.id);
-      fetch(fetchUrl, { method: 'post', body: formData });
       this.resetInfoModal();
     },
     resetInfoModal() {
       this.$root.$emit('bv::hide::modal', this.infoModal.id);
-      this.infoModal.index = '';
-      this.infoModal.title = '';
-      this.infoModal.extension = '';
-      this.infoModal.language = '';
-      this.infoModal.streamPath = '';
-      this.infoModal.available = false;
-      this.infoModal.favorite = false;
     },
     toggleInfoModalAvailable() {
       this.infoModal.available = !this.infoModal.available;
-      // this.items[this.infoModal.index].available = this.infoModal.available;
     },
     toggleInfoModalFavorite() {
       this.infoModal.favorite = !this.infoModal.favorite;
-      // this.items[this.infoModal.index].favorite = this.infoModal.favorite;
     },
     onSubmitUpdate() {
-      const formData = new FormData();
-      const fetchUrl = 'http://192.168.0.9/home/update-messages';
-      this.items[this.infoModal.index].song = this.infoModal.title;
-      this.items[this.infoModal.index].language = this.infoModal.language;
-      this.$root.$emit('bv::hide::modal', this.infoModal.id);
-      formData.append('id', this.infoModal.extension);
-      formData.append('title', this.items[this.infoModal.index].song);
-      formData.append('language', this.infoModal.language);
-      formData.append('available', this.infoModal.available);
-      formData.append('favorite', this.infoModal.favorite);
-      fetch(fetchUrl, { method: 'post', body: formData });
     },
     onResetUpdate(evt) {
       evt.preventDefault();
-      this.infoModal.index = '';
-      this.infoModal.title = '';
-      this.infoModal.extension = '';
     },
   },
 };
