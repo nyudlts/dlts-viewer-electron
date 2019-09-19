@@ -3,17 +3,16 @@
     <div id="navbar" class="pane navbar" role="navigation">
       <ul class="navbar navbar-left">
         <li class="navbar-item">
-          <a
+          <a id="buttonMetadata"
             @click.stop.prevent="toggleMetadataInfoPane()"
-            title="Show/hide metadata"
             class="button metadata"
-            v-bind:class="{ on: isMetadataInfoPaneVisible }"
-          >
+            v-bind:class="{ on: isMetadataInfoPaneVisible }">
             <span>Metadata</span>
           </a>
         </li>
         <li class="navbar-item">
           <a 
+            id="buttonViewMode"
             @click.stop.prevent="togglePageView()"
             title="Toggle between single or double page" 
             class="paging toggle active page-double"
@@ -22,16 +21,33 @@
           </a>
         </li>
         <li class="navbar-item">
-          <a title="Select page" class="button thumbnails off"><span>Pages</span></a>
+          <a 
+            id="buttonBrowsePages"
+            title="Select page" 
+            class="button thumbnails off"
+            @click.stop.prevent="toggleThumbnailsPane()"
+            >
+            <span>Pages</span>
+        </a>
         </li>
         <li class="navbar-item">
-          <a title="Rotate page" class="rotate" @click.stop.prevent="rotateWorld()"><span>Rotate page</span></a>
+          <a 
+            id="buttonRotate" 
+            title="Rotate page" 
+            class="rotate" 
+            @click.stop.prevent="rotateWorld()">
+              <span>Rotate page</span>
+            </a>
         </li>
       </ul>
       <ul class="navbar-fullscreen">
         <li class="navbar-item">
-          <a @click.stop.prevent="toggleFullscreen()" title="Toggle fullscreen" class="button fullscreen" v-bind:class="{ on: isFullScreen }">
-            <span>Toggle fullscreen</span>
+          <a
+            id="buttonToogleFullscreenMode"
+            @click.stop.prevent="toggleFullscreen()" 
+            class="button fullscreen" 
+            v-bind:class="{ on: isFullScreen }">
+              <span>Toggle fullscreen</span>
           </a>
         </li>
       </ul>
@@ -83,6 +99,14 @@
       </span>
     </div>
     <div role="presentation" id="thumbnails" class="views-g pane thumbnails hidden"></div>
+    <ThumbnailsViewModal/>
+    
+    <b-tooltip :title="`${(isMetadataInfoPaneVisible ? 'Hide' : 'Show' )} metadata`" target="buttonMetadata" triggers="hover"></b-tooltip>
+    <b-tooltip title="Rotate page" target="buttonRotate" triggers="hover"></b-tooltip>
+    <b-tooltip title="Browse pages" target="buttonBrowsePages" triggers="hover"></b-tooltip>
+    <b-tooltip :title="`${(isFullScreen ? 'Exit' : 'Enter' )} fullscreen mode`" target="buttonToogleFullscreenMode" triggers="hover"></b-tooltip>
+    <b-tooltip :title="`Switch to ${(isSequenceMode ? 'single page mode' : 'double page mode' )} `" target="buttonViewMode" triggers="hover"></b-tooltip>
+
   </div>
 </template>
 
@@ -92,14 +116,16 @@
 // https://medium.com/vuejoy/internationalization-in-vue-with-vue-i18n-part-1-a1a3c6b47755
 
 import * as OpenSeadragon from 'openseadragon';
+import ThumbnailsViewModal from './ThumbnailsViewModal.vue';
 
 export default {
   name: 'Book',
-  components: {},
+  components: {
+    ThumbnailsViewModal,
+  },
   mounted() {
     this.viewer.options.tileSources = [
       `${this.iiifEndpoint}/${this.type}/${this.identifier}/${this.sequence}/info.json`,
-      `${this.iiifEndpoint}/${this.type}/${this.identifier}/${(this.sequence + 1)}/info.json`,
     ];
     this.map = OpenSeadragon(this.viewer.options);
   },
@@ -119,13 +145,14 @@ export default {
       nextPage: '',
       identifier: 'ifa_frdl_book000002',
       iiifEndpoint: 'http://viewer.test/viewer/iiif/2',
+      viewerEndpoint: 'http://viewer.test/viewer',
       isBusy: true,
       isFullScreen: false,
       isMetadataInfoPaneVisible: true,
       isSequenceMode: false,
       sequenceCount: 0,
       degree: 0,
-      sequence: 1,
+      sequence: 10,
       metadataUrl: 'http://viewer.test/viewer/books/ifa_frdl_book000002/json',
       metadata: {},
       map: null,
@@ -146,8 +173,8 @@ export default {
           constrainDuringPan: true,
           useCanvas: true,
           sequenceMode: false,
-          collectionMode: true,
-          collectionRows: 2,
+          collectionMode: false,
+          collectionRows: null,
         },
       },
     };
@@ -175,10 +202,8 @@ export default {
         });
     },
     changePage() {
-      const source1 = `${this.iiifEndpoint}/${this.type}/${this.identifier}/${this.sequence}/info.json`;
-      const source2 = `${this.iiifEndpoint}/${this.type}/${this.identifier}/${(this.sequence + 1)}/info.json`;
       this.map.addTiledImage({
-        tileSource: [source1, source2],
+        tileSource: `${this.iiifEndpoint}/${this.type}/${this.identifier}/${this.sequence}/info.json`,
       });
     },
     toggleMetadataInfoPane() {
@@ -204,8 +229,10 @@ export default {
       }
     },
     openNextPage() {
+      console.log('openNextPage', `Start ${this.sequence}`);
       if (this.sequence < this.sequenceCount) {
         this.sequence = parseInt(this.sequence, 10) + 1;
+        console.log('openNextPage', `Request ${this.sequence}`);
         this.changePage();
       }
     },
@@ -214,6 +241,16 @@ export default {
       console.log('togglePageView', this.isSequenceMode, this.map);
       this.map.sequenceMode = true;
       console.log(this.map.sequenceMode);
+    },
+    toggleThumbnailsPane() {
+      this.$root.$emit('tv::open::modal', {
+        sequence: this.sequence,
+        map: this.map,
+        entity_title: this.entity_title,
+        identifier: this.identifier,
+        iiifEndpoint: this.viewerEndpoint,
+        viewerEndpoint: this.iiifEndpoint,
+      });
     },
   },
 };
