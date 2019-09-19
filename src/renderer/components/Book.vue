@@ -74,6 +74,7 @@
         <div class="openseadragon" :id="viewer.options.id"></div>
         <a 
         title="Go to previous page" 
+        id="buttonPreviousPage"
         @click.stop.prevent="openPreviousPage()" 
         class="paging previous pager-left"
         v-bind:class="{ active: (sequence > 1), inactive: (sequence <= 1) }"
@@ -82,6 +83,7 @@
         </a>
         <a 
           title="Go to next page" 
+          id="buttonNextPage"
           @click.stop.prevent="openNextPage()" 
           class="paging next pager-right"
           v-bind:class="{ active: (sequence >= sequenceCount), inactive: (sequence >= sequenceCount) }"
@@ -91,21 +93,26 @@
       </div>
     </div>
     <div id="pager" class="pane pager">
-      <b-form-input id="slider" v-model="sequence" :min="1" :max="sequenceCount" type="range" aria-label="Page to jump to"></b-form-input>
+      <b-form-input id="slider" @change="onSliderChange" v-model="sequence" :min="1" :max="sequenceCount" type="range" aria-label="Page to jump to"></b-form-input>
       <span role="navigation">
         <b-form-input id="slider_value" v-model="sequence" type="number" aria-label="Page to jump to"></b-form-input>
         <span>/</span>
         <span class="sequence_count">{{sequenceCount}}</span>
       </span>
     </div>
-    <div role="presentation" id="thumbnails" class="views-g pane thumbnails hidden"></div>
-    <ThumbnailsViewModal/>
-    
+
+    <ThumbnailsViewModal/>    
     <b-tooltip :title="`${(isMetadataInfoPaneVisible ? 'Hide' : 'Show' )} metadata`" target="buttonMetadata" triggers="hover"></b-tooltip>
     <b-tooltip title="Rotate page" target="buttonRotate" triggers="hover"></b-tooltip>
     <b-tooltip title="Browse pages" target="buttonBrowsePages" triggers="hover"></b-tooltip>
     <b-tooltip :title="`${(isFullScreen ? 'Exit' : 'Enter' )} fullscreen mode`" target="buttonToogleFullscreenMode" triggers="hover"></b-tooltip>
     <b-tooltip :title="`Switch to ${(isSequenceMode ? 'single page mode' : 'double page mode' )} `" target="buttonViewMode" triggers="hover"></b-tooltip>
+    <b-tooltip title="Next page" target="buttonNextPage" triggers="hover"></b-tooltip>
+    <b-tooltip title="Previous page" target="buttonPreviousPage" triggers="hover"></b-tooltip>
+    <b-tooltip :title="`Select page ${sequence}`" target="slider" triggers="hover"></b-tooltip>
+    <div v-if="isBusy" class="d-flex justify-content-center mb-3" style="margin-left: auto; margin-right: auto; position: absolute; top: 40%; left: 50%; z-index: 99999999999;">
+      <b-spinner type="grow" :label="`Loading page ${sequence} ...`" style="width: 10rem; height: 10rem;"></b-spinner>
+    </div>
 
   </div>
 </template>
@@ -128,6 +135,14 @@ export default {
       `${this.iiifEndpoint}/${this.type}/${this.identifier}/${this.sequence}/info.json`,
     ];
     this.map = OpenSeadragon(this.viewer.options);
+    this.map.world.addHandler('add-item', (event) => {
+      const tiledImage = event.item;
+      tiledImage.addHandler('fully-loaded-change', () => {
+        if (this.areAllFullyLoaded()) {
+          this.isBusy = false;
+        }
+      });
+    });
   },
   watch: {
     $route: 'fetchData',
@@ -201,7 +216,11 @@ export default {
           this.metadata = data.metadata;
         });
     },
+    onSliderChange() {
+      this.changePage();
+    },
     changePage() {
+      this.isBusy = true;
       this.map.addTiledImage({
         tileSource: `${this.iiifEndpoint}/${this.type}/${this.identifier}/${this.sequence}/info.json`,
       });
@@ -229,18 +248,14 @@ export default {
       }
     },
     openNextPage() {
-      console.log('openNextPage', `Start ${this.sequence}`);
       if (this.sequence < this.sequenceCount) {
         this.sequence = parseInt(this.sequence, 10) + 1;
-        console.log('openNextPage', `Request ${this.sequence}`);
         this.changePage();
       }
     },
     togglePageView() {
       this.isSequenceMode = !this.isSequenceMode;
-      console.log('togglePageView', this.isSequenceMode, this.map);
       this.map.sequenceMode = true;
-      console.log(this.map.sequenceMode);
     },
     toggleThumbnailsPane() {
       this.$root.$emit('tv::open::modal', {
@@ -251,6 +266,17 @@ export default {
         iiifEndpoint: this.viewerEndpoint,
         viewerEndpoint: this.iiifEndpoint,
       });
+    },
+    areAllFullyLoaded() {
+      let tiledImage;
+      const count = this.map.world.getItemCount();
+      for (let i = 0; i < count; i += 1) {
+        tiledImage = this.map.world.getItemAt(i);
+        if (!tiledImage.getFullyLoaded()) {
+          return false;
+        }
+      }
+      return true;
     },
   },
 };
